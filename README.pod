@@ -4,6 +4,11 @@ If you use the L<MacLoggerDX|http://www.dogparksoftware.com/MacLoggerDX.html>
 L<HAM radio|https://en.wikipedia.org/wiki/Amateur_radio> logging software and
 know how to run a L<perl|https://www.perl.org/about.html> script.
 
+=head1 Configuration
+
+See the C<sample-config.yml> file in the repo for all availble configuration
+options.  All of the scripts look for this file as C<config.yml> in the current directory.
+
 =head2 send-qsls.pl
 
 This script uploads QSL entries with empty QSL Sent columns to
