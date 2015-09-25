@@ -1,0 +1,62 @@
+#!/usr/bin/env perl
+
+=head1 WAT
+
+If you use DQSL manager to import eQSL & LoTW confirmations into MacLoggerDX you
+can somtetimes end up with duplicates in the QSL Received column of the log such as
+C<eQSL.cc:Y, LoTW:20150917, LoTW:20150919>.  This script keeps just the first
+confirmation entry for each type.
+
+=cut
+
+use strict;
+use warnings;
+use 5.014;
+
+use autodie;
+use DBI;
+use YAML::Tiny;
+
+my $config          = YAML::Tiny->read('config.yml')->[0];
+my $QRZ_LOGBOOK_KEY = $config->{QRZ_LOGBOOK_KEY};
+my $EQSL_USER       = $config->{EQSL_USER};
+my $EQSL_PWD        = $config->{EQSL_PWD};
+
+my @FIELDS = (qw(call gridsquare mode rst_sent rst_rcvd qso_date time_on band freq station_callsign my_gridsquare tx_pwr comment));
+my %FIELDS = (
+  call             => 'call',
+  gridsquare       => 'grid',
+  mode             => 'mode',
+  rst_sent         => 'rst_sent',
+  rst_rcvd         => 'rst_received',
+  qso_date         => 'qso_date',
+  time_on          => 'time_on',
+  band             => 'band_rx',
+  freq             => 'rx_frequency',
+  station_callsign => 'my_call',
+  my_gridsquare    => 'my_grid',
+  tx_pwr           => 'power',
+  comment          => 'comments',
+);
+
+my $dbh = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
+
+my $fix_it = $dbh->prepare(q{ UPDATE qso_table_v007 SET qsl_received = ? WHERE pk = ? });
+
+my $sth = $dbh->prepare(q{ SELECT * FROM qso_table_v007 WHERE LENGTH(qsl_received) > 24 });
+$sth->execute;
+
+while(my $row = $sth->fetchrow_hashref) {
+  # eQSL.cc:Y, LoTW:20150917, LoTW:20150919
+  my @records = split /,/, $row->{qsl_received};
+
+  my %confirmations;
+  for my $record (@records) {
+    my ($where, $data) = split /:/, $record;
+    $confirmations{$where} ||= $data; # just keep the first one we see
+  }
+  my $fixed_shit = join ', ', map { "$_:$confirmations{$_}" } keys %confirmations;
+
+  say "$row->{qsl_received} -> $fixed_shit";
+  $fix_it->execute( $fixed_shit, $row->{pk} );
+}
