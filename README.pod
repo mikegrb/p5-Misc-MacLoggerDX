@@ -1,0 +1,22 @@
+=head1 Was ist dies?
+
+If you use the L<MacLoggerDX|http://www.dogparksoftware.com/MacLoggerDX.html>
+L<HAM radio|https://en.wikipedia.org/wiki/Amateur_radio> logging software and
+know how to run a L<perl|https://www.perl.org/about.html> script.
+
+=head2 send-qsls.pl
+
+This script uploads QSL entries with empty QSL Sent columns to
+L<eQSL|http://eqsl.com> and L<QRZ.com|http://www.qrz.com>.
+Entries can easily be sent to L<LoTW|https://lotw.arrl.org/> from the
+QRZ site after they are imported there. After running, reload your DB by
+selecting File -> Recent -> Your Current Log in MacLoggerDX.
+
+=head2 fix-confirmations.pl
+
+If you use DQSL manager to import eQSL & LoTW confirmations into MacLoggerDX you
+can somtetimes end up with duplicates in the QSL Received column of the log such as
+C<eQSL.cc:Y, LoTW:20150917, LoTW:20150919>.  This script keeps just the first
+confirmation entry for each type.
+
+
