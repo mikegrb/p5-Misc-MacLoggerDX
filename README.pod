@@ -2,7 +2,7 @@
 
 If you use the L<MacLoggerDX|http://www.dogparksoftware.com/MacLoggerDX.html>
 L<HAM radio|https://en.wikipedia.org/wiki/Amateur_radio> logging software and
-know how to run a L<perl|https://www.perl.org/about.html> script.
+know how to run a L<perl|https://www.perl.org/about.html> script, this stuff might be of interest/useful to you.
 
 =head1 Configuration
 
