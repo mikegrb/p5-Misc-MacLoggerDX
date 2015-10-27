@@ -57,6 +57,7 @@ $sth->execute;
 my $filename = strftime( 'log/%Y-%m-%d.adi', gmtime );
 open( my $fh, '>>', $filename );
 while ( my $row = $sth->fetchrow_hashref ) {
+  say $row->{call};
   $row->{qso_date} = strftime( "%Y%m%d", gmtime( $row->{qso_start} ) );
   $row->{time_on}  = strftime( "%H%M", gmtime( $row->{qso_start} ) );
   say $fh my $record = generate_record($row);
@@ -87,7 +88,7 @@ sub log_to_eqsl {
     warn "$err->{code} reponse from eQSL post.\n";
   }
   else {
-    say "eQSL:\n" . $tx->success->dom->at('body')->text;
+    say " eQSL: " . $tx->success->dom->at('body')->text;
   }
 }
 
@@ -95,8 +96,13 @@ sub log_to_qrz {
   my $record = shift;
   my $tx = $ua->post( 'http://logbook.qrz.com/api' => form =>
       { KEY => $QRZ_LOGBOOK_KEY, ACTION => 'INSERT', ADIF => $record } );
-  if (! $tx->success ) {
+    my $response = $tx->success;
+  if (! $response ) {
     my $err = $tx->error;
     warn "$err->{code} reponse from QRZ post.\n";
   }
+  else {
+    say " QRZ:  " . $response->body;
+  }
+}
 }
