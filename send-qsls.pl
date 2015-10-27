@@ -51,7 +51,7 @@ my $mark_exported = $dbh->prepare(q{
   UPDATE qso_table_v007 SET qsl_sent = ? WHERE pk = ?
 });
 
-my $sth = $dbh->prepare(q{SELECT * FROM qso_table_v007 WHERE qsl_sent IS NULL OR qsl_sent = ''});
+my $sth = $dbh->prepare(q{SELECT * FROM qso_table_v007 WHERE (qsl_sent IS NULL OR qsl_sent = '') AND comments NOT LIKE '%NO AUTO%'});
 $sth->execute;
 
 my $filename = strftime( 'log/%Y-%m-%d.adi', gmtime );
