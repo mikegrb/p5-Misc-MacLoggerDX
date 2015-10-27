@@ -4,8 +4,6 @@
 
 This script uploads QSL entries with empty QSL Sent columns to eQSL and QRZ.com.
 Entries can easily be sent to LoTW from the QRZ site after they are imported there.
-After running, reload your DB by selecting File -> Recent -> Your Current Log in
-MacLoggerDX,
 
 =cut
 
@@ -65,6 +63,7 @@ while ( my $row = $sth->fetchrow_hashref ) {
   log_to_qrz($record);
   $mark_exported->execute( $sent_time, $row->{pk} );
 }
+reload_maclogger_view();
 
 sub generate_record {
   my $record = shift;
@@ -105,4 +104,23 @@ sub log_to_qrz {
     say " QRZ:  " . $response->body;
   }
 }
+
+sub osascript($) {
+    open( my $fh, '-|', 'osascript',
+        map { ( '-e', $_ ) } split( /\n/, $_[0] ) );
+    my $output = join '', <$fh>;
+    close $fh;
+    return $output;
+}
+
+sub reload_maclogger_view {
+  osascript <<'  END';
+    tell application "System Events"
+      tell process "MacLoggerDX"
+        activate
+        delay 1
+        click menu item 1 of menu of menu item "Open Recent" of menu 1 of menu bar item "File" of menu bar 1
+      end tell
+    end tell
+  END
 }
