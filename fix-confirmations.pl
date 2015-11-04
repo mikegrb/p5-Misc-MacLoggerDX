@@ -60,11 +60,34 @@ while(my $row = $sth->fetchrow_hashref) {
   say "$row->{qsl_received} -> $fixed_shit";
   $fix_it->execute( $fixed_shit, $row->{pk} );
 }
+reload_maclogger_view();
+
+
 sub trim {
   my $text = shift;
   return unless $text;
   $text =~ s/^\s+//;
   $text =~ s/\s+$//;
   return $text;
+}
+
+sub osascript($) {
+    open( my $fh, '-|', 'osascript',
+        map { ( '-e', $_ ) } split( /\n/, $_[0] ) );
+    my $output = join '', <$fh>;
+    close $fh;
+    return $output;
+}
+
+sub reload_maclogger_view {
+  osascript <<'  END';
+    tell application "System Events"
+      tell process "MacLoggerDX"
+        activate
+        delay 1
+        click menu item 1 of menu of menu item "Open Recent" of menu 1 of menu bar item "File" of menu bar 1
+      end tell
+    end tell
+  END
 }
 
