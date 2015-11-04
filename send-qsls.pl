@@ -56,6 +56,7 @@ my $filename = strftime( 'log/%Y-%m-%d.adi', gmtime );
 open( my $fh, '>>', $filename );
 while ( my $row = $sth->fetchrow_hashref ) {
   say $row->{call};
+  $row->{comments} =~ s/(?:, )?Uploaded to Club Log \d{4}-\d{2}-\d{2} \d{2}:\d{2}$//;
   $row->{qso_date} = strftime( "%Y%m%d", gmtime( $row->{qso_start} ) );
   $row->{time_on}  = strftime( "%H%M", gmtime( $row->{qso_start} ) );
   say $fh my $record = generate_record($row);
