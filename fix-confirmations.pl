@@ -57,7 +57,7 @@ while(my $row = $sth->fetchrow_hashref) {
   }
   my $fixed_shit = join ', ', map { "$_:$confirmations{$_}" } keys %confirmations;
 
-  say "$row->{qsl_received} -> $fixed_shit";
+  say "$row->{call} $row->{qsl_received} -> $fixed_shit";
   $fix_it->execute( $fixed_shit, $row->{pk} );
 }
 reload_maclogger_view();
