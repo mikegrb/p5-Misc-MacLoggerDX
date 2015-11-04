@@ -52,7 +52,7 @@ while(my $row = $sth->fetchrow_hashref) {
 
   my %confirmations;
   for my $record (@records) {
-    my ($where, $data) = split /:/, $record;
+    my ($where, $data) = map { trim($_) } split /:/, $record;
     $confirmations{$where} ||= $data; # just keep the first one we see
   }
   my $fixed_shit = join ', ', map { "$_:$confirmations{$_}" } keys %confirmations;
@@ -60,3 +60,11 @@ while(my $row = $sth->fetchrow_hashref) {
   say "$row->{qsl_received} -> $fixed_shit";
   $fix_it->execute( $fixed_shit, $row->{pk} );
 }
+sub trim {
+  my $text = shift;
+  return unless $text;
+  $text =~ s/^\s+//;
+  $text =~ s/\s+$//;
+  return $text;
+}
+
