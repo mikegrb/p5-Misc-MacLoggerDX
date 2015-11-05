@@ -46,6 +46,7 @@ my $fix_it = $dbh->prepare(q{ UPDATE qso_table_v007 SET qsl_received = ? WHERE p
 my $sth = $dbh->prepare(q{ SELECT * FROM qso_table_v007 WHERE LENGTH(qsl_received) > 24 });
 $sth->execute;
 
+my $fixed = 0;
 while(my $row = $sth->fetchrow_hashref) {
   # eQSL.cc:Y, LoTW:20150917, LoTW:20150919
   my @records = split /,/, $row->{qsl_received};
@@ -59,9 +60,9 @@ while(my $row = $sth->fetchrow_hashref) {
 
   say "$row->{call} $row->{qsl_received} -> $fixed_shit";
   $fix_it->execute( $fixed_shit, $row->{pk} );
+  $fixed++;
 }
-reload_maclogger_view();
-
+reload_maclogger_view() if $fixed;
 
 sub trim {
   my $text = shift;
