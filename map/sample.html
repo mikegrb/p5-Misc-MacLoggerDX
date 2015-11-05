@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>QSOs Map</title>
+  <link rel="stylesheet" href="jquery-jvectormap-2.0.3.css" type="text/css" media="screen"/>
+  <script src="jquery-2.1.4.min.js"></script>
+  <script src="jquery-jvectormap-2.0.3.min.js"></script>
+  <script src="jquery-jvectormap-world-mill.js"></script>
+  <script src="jquery-jvectormap-us-aea.js"></script>
+</head>
+
+<body>
+
+This sample page is viewable with data at http://michael.thegrebs.com/map/sample.html
+
+<h3>World Contacts</h3>
+<div id="world_mill" style="width: 600px; height: 400px"></div>
+<br/>
+
+<h3>US Contacts</h3>
+<div id="us_aea" style="width: 600px; height: 400px"></div>
+<br/>
+
+<h3>Individual Contacts</h3>
+<div id="map" style="width: 800px; height: 500px"></div>
+
+<script>
+  function initMap() {
+    var map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 11,
+      center: {lat: 41.876, lng: -87.624}
+    });
+
+    var ctaLayer = new google.maps.KmlLayer({
+      url: 'http://michael.thegrebs.com/qsos/qso.kml',
+      map: map
+    });
+  }
+
+  var init_vector_map = function(target, map_data) {
+    $('#'+target).vectorMap({
+      map: target,
+      series: {
+        regions: [{
+          values: map_data.qso,
+          scale: ['#95F702', '#01B738'],
+          normalizeFunction: 'polynomial'
+        }]
+      },
+      onRegionTipShow: function(e, el, code) {
+        el.html(el.html()+'<br>\nQSOs: ' + ( map_data.qso[code]||0 ) + ', LoTW: ' + ( map_data.lotw[code] || 0 ) + ' eQSL: ' + ( map_data.eqsl[code] || 0 ) );
+      }
+    });
+  };
+
+
+  $(function(){
+    $.getJSON( "qso.json", function( map_data ) {
+      init_vector_map('world_mill', map_data);
+      init_vector_map('us_aea', map_data);
+    });
+  });
+
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUrgHP2BSxo3JdAprYffT_trsj4RGqSAs&signed_in=false&callback=initMap">
+</script>
+
+</body>
+</html>
