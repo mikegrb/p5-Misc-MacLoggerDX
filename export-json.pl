@@ -41,6 +41,9 @@ while ( my $row = $sth->fetchrow_hashref ) {
     next;
   }
   $code = uc $code;
+
+  $code = 'PR' if $code eq 'US' && $row->{state} eq 'PR';
+
   $qso_for{$code}++;
   $lotw_for{$code}++ if $lotw;
   $eqsl_for{$code}++ if $eqsl;
