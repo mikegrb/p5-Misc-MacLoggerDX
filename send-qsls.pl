@@ -52,6 +52,7 @@ my $mark_exported = $dbh->prepare(q{
 my $sth = $dbh->prepare(q{SELECT * FROM qso_table_v007 WHERE (qsl_sent IS NULL OR qsl_sent = '') AND comments NOT LIKE '%NO AUTO%'});
 $sth->execute;
 
+my $count = 0;
 my $filename = strftime( 'log/%Y-%m-%d.adi', gmtime );
 open( my $fh, '>>', $filename );
 while ( my $row = $sth->fetchrow_hashref ) {
@@ -63,8 +64,12 @@ while ( my $row = $sth->fetchrow_hashref ) {
   log_to_eqsl($record);
   log_to_qrz($record);
   $mark_exported->execute( $sent_time, $row->{pk} );
+  $count++;
 }
+
+exit unless $count;
 reload_maclogger_view();
+system './export-json.pl' if $config->{auto_json};
 
 sub generate_record {
   my $record = shift;
