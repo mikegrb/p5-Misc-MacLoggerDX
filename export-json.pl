@@ -52,12 +52,15 @@ while ( my $row = $sth->fetchrow_hashref ) {
   }
 }
 
-say to_json(
+exit unless keys %qso_for;
+
+open my $fh, '>', 'map/qso.json';
+say $fh to_json(
   { qso  => \%qso_for,
     lotw => \%lotw_for,
     eqsl => \%eqsl_for
   } );
-
+close($fh);
 
 sub is_confirmed {
   my $raw = shift->{qsl_received};
