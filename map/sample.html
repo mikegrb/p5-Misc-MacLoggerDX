@@ -12,7 +12,14 @@
 
 <body>
 
-This sample page is viewable with data at http://michael.thegrebs.com/map/sample.html
+<p>This sample page is viewable with data at http://michael.thegrebs.com/map/sample.html</p>
+
+
+<p>Color locations by:
+<button type="button" onclick="graph_series('qso')">QSO</button>
+<button type="button" onclick="graph_series('lotw')">LoTW</button>
+<button type="button" onclick="graph_series('eqsl')">eQSL</button>
+</p>
 
 <h3>World Contacts</h3>
 <div id="world_mill" style="width: 600px; height: 400px"></div>
@@ -26,12 +33,12 @@ This sample page is viewable with data at http://michael.thegrebs.com/map/sample
 <div id="map" style="width: 800px; height: 500px"></div>
 
 <script>
+  var qso_data;
   function initMap() {
     var map = new google.maps.Map(document.getElementById('map'), {
       zoom: 11,
       center: {lat: 41.876, lng: -87.624}
     });
-
     var ctaLayer = new google.maps.KmlLayer({
       url: 'http://michael.thegrebs.com/qsos/qso.kml',
       map: map
@@ -43,22 +50,33 @@ This sample page is viewable with data at http://michael.thegrebs.com/map/sample
       map: target,
       series: {
         regions: [{
-          values: map_data.qso,
+          values: map_data,
           scale: ['#95F702', '#01B738'],
           normalizeFunction: 'polynomial'
         }]
       },
       onRegionTipShow: function(e, el, code) {
-        el.html(el.html()+'<br>\nQSOs: ' + ( map_data.qso[code]||0 ) + ', LoTW: ' + ( map_data.lotw[code] || 0 ) + ' eQSL: ' + ( map_data.eqsl[code] || 0 ) );
+        el.html(el.html()+'<br>\nQSOs: ' + ( qso_data.qso[code]||0 ) + ', LoTW: ' + ( qso_data.lotw[code] || 0 ) + ' eQSL: ' + ( qso_data.eqsl[code] || 0 ) );
       }
     });
   };
 
+  var update_vector_map = function(target, map_data) {
+    var map = $('#' + target).vectorMap('get', 'mapObject');
+    map.reset();
+    map.series.regions[0].setValues(map_data);
+  };
+
+  var graph_series = function(type) {
+    update_vector_map('world_mill', qso_data[type]);
+    update_vector_map('us_aea', qso_data[type]);
+  };
 
   $(function(){
     $.getJSON( "qso.json", function( map_data ) {
-      init_vector_map('world_mill', map_data);
-      init_vector_map('us_aea', map_data);
+      qso_data = map_data;
+      init_vector_map('world_mill', qso_data.qso);
+      init_vector_map('us_aea', qso_data.qso);
     });
   });
 
