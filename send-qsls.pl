@@ -22,6 +22,7 @@ my $config          = YAML::Tiny->read('config.yml')->[0];
 my $QRZ_LOGBOOK_KEY = $config->{QRZ_LOGBOOK_KEY};
 my $EQSL_USER       = $config->{EQSL_USER};
 my $EQSL_PWD        = $config->{EQSL_PWD};
+my $lotw_file       = 'log/temp_lotw.adi';
 
 my @FIELDS = (qw(call gridsquare mode rst_sent rst_rcvd qso_date time_on band freq station_callsign my_gridsquare tx_pwr comment));
 my %FIELDS = (
@@ -40,36 +41,74 @@ my %FIELDS = (
   comment          => 'comments',
 );
 
-my $dbh = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
+my %send_to = (
+  eqsl => \&log_to_eqsl,
+  qrz  => \&log_to_qrz,
+);
 
+my $dbh = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
 my $ua = Mojo::UserAgent->new;
 
-my $sent_time = strftime("exported %Y-%M-%d %H:%M", localtime);
-my $mark_exported = $dbh->prepare(q{
-  UPDATE qso_table_v007 SET qsl_sent = ? WHERE pk = ?
+my $sth = $dbh->prepare(q{
+  SELECT * FROM qso_table_v007
+  WHERE (qsl_sent IS NULL OR qsl_sent = '' or LENGTH(qsl_sent) < 13)
+    AND comments NOT LIKE '%NO AUTO%'
 });
-
-my $sth = $dbh->prepare(q{SELECT * FROM qso_table_v007 WHERE (qsl_sent IS NULL OR qsl_sent = '') AND comments NOT LIKE '%NO AUTO%'});
 $sth->execute;
 
-my $count = 0;
 my $filename = strftime( 'log/%Y-%m-%d.adi', gmtime );
-open( my $fh, '>>', $filename );
+open( my $lotw_fh, '>',  $lotw_file );
+open( my $fh,      '>>', $filename );
+
+my ( $count, %results, %counts );
 while ( my $row = $sth->fetchrow_hashref ) {
   say $row->{call};
   $row->{comments} =~ s/(?:, )?Uploaded to Club Log \d{4}-\d{2}-\d{2} \d{2}:\d{2}$//;
   $row->{qso_date} = strftime( "%Y%m%d", gmtime( $row->{qso_start} ) );
   $row->{time_on}  = strftime( "%H%M", gmtime( $row->{qso_start} ) );
   say $fh my $record = generate_record($row);
-  log_to_eqsl($record);
-  log_to_qrz($record);
-  $mark_exported->execute( $sent_time, $row->{pk} );
-  $count++;
+  if ( !check_sent( $row, 'lotw' ) ) {
+    say $lotw_fh $record;
+    $counts{lotw}++;
+  }
+
+  for my $site ( 'eqsl', 'qrz' ) {
+    if(check_sent( $row, $site )) {
+      $results{ $row->{pk} }{$site} = 1;
+      next;
+    }
+    $results{ $row->{pk} }{$site} = $send_to{$site}->($record);
+    $count++;
+    $counts{$site}++;
+  }
 }
+close ($lotw_fh);
+
+log_to_lotw() if -s $lotw_file;
 
 exit unless $count;
+say join(', ', map { "$_: $counts{$_}" } keys %counts);
+update_sent();
 reload_maclogger_view();
 system './export-json.pl' if $config->{auto_json};
+
+sub check_sent {
+  my ($row, $where) = @_;
+  return unless $row->{qsl_sent};
+  return $row->{qsl_sent} =~ m/\Q$where\E/;
+}
+
+sub update_sent {
+  my $mark_exported = $dbh->prepare(q{
+    UPDATE qso_table_v007 SET qsl_sent = ? WHERE pk = ?
+  });
+
+  for my $pk (keys %results) {
+    my $exported_text = join( ',', grep { $results{$pk}{$_} } keys( $results{$pk} ) );
+    $mark_exported->execute( $exported_text, $pk );
+  }
+
+}
 
 sub generate_record {
   my $record = shift;
@@ -91,9 +130,11 @@ sub log_to_eqsl {
   if (! $tx->success ) {
     my $err = $tx->error;
     warn "$err->{code} reponse from eQSL post.\n";
+    return;
   }
   else {
     say " eQSL: " . $tx->success->dom->at('body')->text;
+    return 1;
   }
 }
 
@@ -105,9 +146,41 @@ sub log_to_qrz {
   if (! $response ) {
     my $err = $tx->error;
     warn "$err->{code} reponse from QRZ post.\n";
+    return;
   }
   else {
     say " QRZ:  " . $response->body;
+    return 1;
+  }
+}
+
+sub log_to_lotw {
+  my @args = (
+    $config->{lotw_path}, '-d', '-q', '-u', '-c', $config->{lotw_call}, '-a', 'compliant', '-l',
+    $config->{lotw_site}, '-x', $lotw_file,
+    '2>log/lotw_out.log'
+  );
+  ( system join( ' ', @args ) ) == 0 or do {
+    printf "Problem uploading to lotw, tqsl exited with exit code %d\n", $? >> 8;
+    return;
+  };
+
+  if (-s 'log/lotw_out.log') {
+    open my $lotw_log_fh, '<', 'log/lotw_out.log';
+    my $log = join('', <$lotw_log_fh>);
+    close $lotw_log_fh;
+    if ($log =~ m/\([09]\)$/m) {
+      for my $pk ( keys %results ) {
+        $results{$pk}{lotw} = 1;
+      }
+      $count += $counts{lotw};
+    }
+    else {
+      say "LoTW error:\n$log";
+    }
+  }
+  else {
+    say "LoTW Unknown error.";
   }
 }
 
