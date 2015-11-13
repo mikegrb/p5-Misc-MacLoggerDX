@@ -2,8 +2,7 @@
 
 =head1 WAT
 
-This script uploads QSL entries with empty QSL Sent columns to eQSL and QRZ.com.
-Entries can easily be sent to LoTW from the QRZ site after they are imported there.
+This script uploads QSL entries with empty QSL Sent columns to eQSL, LoTW, and QRZ.com.
 
 =cut
 
