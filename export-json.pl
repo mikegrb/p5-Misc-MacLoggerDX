@@ -7,11 +7,11 @@ use 5.014;
 
 use autodie;
 use DBI;
-use Data::Printer;
-use YAML::Tiny;
 use JSON;
+use Template;
+use YAML::Tiny;
 use Locale::Country;
-
+use POSIX 'strftime';
 
 my %overrides = (
   England            => 'GB',
@@ -21,14 +21,19 @@ my %overrides = (
   'Canary Islands'   => 'ES',
 );
 
-my $config          = YAML::Tiny->read('config.yml')->[0];
-my $dbh = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
+my $DESCRIPTION = q{<h3>[% call %]</h3><div style="line-height: 1.2em">Worked: [% qso_date %]<br>[% mode %] on [% tx_frequency %] MHz<br>LoTW: [% lotw %] eQSL: [% eqsl %]<br>DXCC: [% dxcc_country %]<br>Name: [% first_name %]</div>};
 
+my $config = YAML::Tiny->read('config.yml')->[0];
+my $dbh    = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
+my $tt     = Template->new;
 
-my $sth = $dbh->prepare(q{SELECT * FROM qso_table_v007});
+my $sth = $dbh->prepare(q{
+  SELECT * FROM qso_table_v007
+  WHERE (comments NOT LIKE '%NO AUTO%' OR comments IS NULL)
+});
 $sth->execute;
 
-my ( %qso_for, %lotw_for, %eqsl_for );
+my ( %qso_for, %lotw_for, %eqsl_for, @points );
 while ( my $row = $sth->fetchrow_hashref ) {
   my ( $lotw, $eqsl ) = is_confirmed($row);
 
@@ -36,23 +41,45 @@ while ( my $row = $sth->fetchrow_hashref ) {
     = exists( $overrides{ $row->{postal_country} } )
     ? $overrides{ $row->{postal_country} }
     : country2code( $row->{postal_country} );
-  unless ($code) {
+
+  if ($code) {
+    $code = uc $code;
+    $code = 'PR' if $code eq 'US' && $row->{state} eq 'PR';
+
+    $qso_for{$code}++;
+    $lotw_for{$code}++ if $lotw;
+    $eqsl_for{$code}++ if $eqsl;
+
+    if ($row->{postal_country} eq 'United States') {
+      $qso_for{ 'US-' . $row->{state} }++;
+      $lotw_for{ 'US-' . $row->{state} }++ if $lotw;
+      $eqsl_for{ 'US-' . $row->{state} }++ if $eqsl;
+    }
+  }
+  else {
     warn "Didn't get country for $row->{postal_country}, $row->{call}\n";
-    next;
   }
-  $code = uc $code;
 
-  $code = 'PR' if $code eq 'US' && $row->{state} eq 'PR';
+  # geojson
+  $row->{lotw} = $lotw ? 'Y' : 'N';
+  $row->{eqsl} = $eqsl ? 'Y' : 'N';
+  $row->{tx_frequency} = sprintf( '%.5f', $row->{tx_frequency});
+  $row->{first_name} ||= $row->{last_name} || ' ';
+  $row->{qso_date} = strftime( '%F', gmtime( $row->{qso_done} ) );
+  my $description;
+  $tt->process(\$DESCRIPTION, $row, \$description) or die $tt->error;
 
-  $qso_for{$code}++;
-  $lotw_for{$code}++ if $lotw;
-  $eqsl_for{$code}++ if $eqsl;
-
-  if ($row->{postal_country} eq 'United States') {
-    $qso_for{ 'US-' . $row->{state} }++;
-    $lotw_for{ 'US-' . $row->{state} }++ if $lotw;
-    $eqsl_for{ 'US-' . $row->{state} }++ if $eqsl;
-  }
+  push @points, {
+    type => 'Feature',
+    geometry => {
+      type => 'Point',
+      coordinates => [ $row->{longitude}, $row->{latitude} ],
+    },
+    properties => {
+      name => $row->{call},
+      description => $description,
+    }
+  };
 }
 
 exit unless keys %qso_for;
@@ -64,6 +91,11 @@ say $fh to_json(
     eqsl => \%eqsl_for
   } );
 close($fh);
+
+open( $fh, '>', 'map/qsogeo.json' );
+say $fh to_json { type => 'FeatureCollection', features => \@points };
+close $fh;
+
 
 sub is_confirmed {
   my $raw = shift->{qsl_received};
