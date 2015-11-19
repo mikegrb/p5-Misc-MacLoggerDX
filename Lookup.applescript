@@ -4,8 +4,8 @@ tell application "MacLoggerDX"
 		set qsoLogMode to "OLIVIA"
 	else if qsoLogMode ends with "HELL" then
 		set qsoLogMode to "HELL"
-	else if qsoLogMode = "BPSK31" then
-		set qsoLogMode to "PSK31"
+	else if qsoLogMode starts with "BPSK" then
+		set qsoLogMode to characters 2 thru -1 of qsoLogMode as string
 	end if
 	
 	lookup (system attribute "FLDIGI_LOG_CALL")
