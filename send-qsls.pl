@@ -51,7 +51,7 @@ my $ua = Mojo::UserAgent->new;
 my $sth = $dbh->prepare(q{
   SELECT * FROM qso_table_v007
   WHERE (qsl_sent IS NULL OR qsl_sent = '' or LENGTH(qsl_sent) < 13)
-    AND comments NOT LIKE '%NO AUTO%'
+    AND (comments NOT LIKE '%NO AUTO%' OR comments IS NULL)
 });
 $sth->execute;
 
@@ -62,6 +62,7 @@ open( my $fh,      '>>', $filename );
 my ( $count, %results, %counts );
 while ( my $row = $sth->fetchrow_hashref ) {
   say $row->{call};
+  $row->{comments} ||= '';
   $row->{comments} =~ s/(?:, )?Uploaded to Club Log \d{4}-\d{2}-\d{2} \d{2}:\d{2}$//;
   $row->{qso_date} = strftime( "%Y%m%d", gmtime( $row->{qso_start} ) );
   $row->{time_on}  = strftime( "%H%M", gmtime( $row->{qso_start} ) );
