@@ -6,8 +6,10 @@ tell application "MacLoggerDX"
 		set qsoLogMode to "HELL"
 	else if qsoLogMode starts with "BPSK" then
 		set qsoLogMode to characters 2 thru -1 of qsoLogMode as string
+	else if qsoLogMode starts with "DOMEX" then
+		set qsoLogMode to "DOMINO"
 	end if
-	
+
 	lookup (system attribute "FLDIGI_LOG_CALL")
 	delay 1
 	setLogFrequency ((system attribute "FLDIGI_FREQUENCY") / 1000000)
