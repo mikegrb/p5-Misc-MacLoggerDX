@@ -19,6 +19,13 @@ my %overrides = (
   Wales              => 'GB',
   'Northern Ireland' => 'GB',
   'Canary Islands'   => 'ES',
+  Kosovo             => 'XK',
+  Kaliningrad        => 'RU',
+  Corsica            => 'FR',
+  Bonaire            => 'NL',
+  'European Russia'  => 'RU',
+  Hawaii             => 'US',
+  'Madeira Island'   => 'PT',
 );
 
 my $DESCRIPTION = q{<h3>[% call %]</h3><div style="line-height: 1.2em">Worked: [% qso_date %]<br>[% mode %] on [% tx_frequency %] MHz<br>LoTW: [% lotw %] eQSL: [% eqsl %]<br>DXCC: [% dxcc_country %]<br>Name: [% first_name %]</div>};
@@ -44,13 +51,13 @@ while ( my $row = $sth->fetchrow_hashref ) {
 
   if ($code) {
     $code = uc $code;
-    $code = 'PR' if $code eq 'US' && $row->{state} eq 'PR';
+    $code = 'PR' if $code eq 'US' && $row->{state} && $row->{state} eq 'PR';
 
     $qso_for{$code}++;
     $lotw_for{$code}++ if $lotw;
     $eqsl_for{$code}++ if $eqsl;
 
-    if ($row->{postal_country} eq 'United States') {
+    if ($row->{postal_country} eq 'United States' && $row->{state} ) {
       $qso_for{ 'US-' . $row->{state} }++;
       $lotw_for{ 'US-' . $row->{state} }++ if $lotw;
       $eqsl_for{ 'US-' . $row->{state} }++ if $eqsl;
