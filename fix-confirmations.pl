@@ -54,9 +54,10 @@ while(my $row = $sth->fetchrow_hashref) {
   my %confirmations;
   for my $record (@records) {
     my ($where, $data) = map { trim($_) } split /:/, $record;
+    next if $where eq 'Y';
     $confirmations{$where} ||= $data; # just keep the first one we see
   }
-  my $fixed_shit = join ', ', map { "$_:$confirmations{$_}" } keys %confirmations;
+  my $fixed_shit = join ', ', sort map { "$_:$confirmations{$_}" } keys %confirmations;
 
   say "$row->{call} $row->{qsl_received} -> $fixed_shit";
   $fix_it->execute( $fixed_shit, $row->{pk} );
@@ -91,4 +92,3 @@ sub reload_maclogger_view {
     end tell
   END
 }
-
