@@ -13,6 +13,8 @@ use YAML::Tiny;
 use Locale::Country;
 use POSIX 'strftime';
 
+my $GRID_MAX = shift || 0;
+
 my %overrides = (
   England            => 'GB',
   Scotland           => 'GB',
@@ -24,7 +26,9 @@ my %overrides = (
   Corsica            => 'FR',
   Bonaire            => 'NL',
   'European Russia'  => 'RU',
+  'Asiatic Russia'   => 'RU',
   Hawaii             => 'US',
+  Alaska             => 'US',
   'Madeira Island'   => 'PT',
 );
 
@@ -37,10 +41,11 @@ my $tt     = Template->new;
 my $sth = $dbh->prepare(q{
   SELECT * FROM qso_table_v007
   WHERE (comments NOT LIKE '%NO AUTO%' OR comments IS NULL)
+  ORDER BY qso_done DESC
 });
 $sth->execute;
 
-my ( %qso_for, %lotw_for, %eqsl_for, @points );
+my ( %qso_for, %lotw_for, %grid_count, %eqsl_for, @points );
 while ( my $row = $sth->fetchrow_hashref ) {
   my ( $lotw, $eqsl ) = is_confirmed($row);
 
@@ -68,6 +73,10 @@ while ( my $row = $sth->fetchrow_hashref ) {
   }
 
   # geojson
+  if ($GRID_MAX) {
+    next if $grid_count{ substr $row->{grid}, 0, 4 }++ > $GRID_MAX;
+  }
+
   $row->{lotw} = $lotw ? 'Y' : 'N';
   $row->{eqsl} = $eqsl ? 'Y' : 'N';
   $row->{tx_frequency} = sprintf( '%.5f', $row->{tx_frequency});
