@@ -86,7 +86,7 @@ while ( my $row = $sth->fetchrow_hashref ) {
 
   # geojson
   if ($GRID_MAX) {
-    next if $grid_count{ substr $row->{grid}, 0, 4 }++ > $GRID_MAX;
+    next if $grid_count{ substr $row->{grid}, 0, 2 }++ > $GRID_MAX;
   }
 
   $row->{lotw} = $lotw ? 'Y' : 'N';
