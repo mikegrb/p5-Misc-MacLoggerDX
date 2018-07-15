@@ -15,6 +15,7 @@ use POSIX 'strftime';
 
 my $GRID_MAX = shift || 0;
 
+# Mostly Autonomious Regions
 my %overrides = (
   England            => 'GB',
   Scotland           => 'GB',
@@ -30,6 +31,17 @@ my %overrides = (
   Hawaii             => 'US',
   Alaska             => 'US',
   'Madeira Island'   => 'PT',
+  'Slovak Republic'  => 'SK',
+  'Sardinia'         => 'IT',
+  'St. Barthelemy'   => 'BL',
+  'Guantanamo Bay'   => 'CU',
+  'Azores'           => 'PT',
+  'Balearic Islands' => 'ES',
+  'Cape Verde'       => 'CV',
+  'San Andres and Providencia'  => 'CO',
+  'St Kitts and Nevis'          => 'KN',
+  'Turks and  Caicos Islands'   => 'TC',
+  'Federal Republic of Germany' => 'DE',
 );
 
 my $DESCRIPTION = q{<h3>[% call %]</h3><div style="line-height: 1.2em">Worked: [% qso_date %]<br>[% mode %] on [% tx_frequency %] MHz<br>LoTW: [% lotw %] eQSL: [% eqsl %]<br>DXCC: [% dxcc_country %]<br>Name: [% first_name %]</div>};
