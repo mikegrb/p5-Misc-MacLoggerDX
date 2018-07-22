@@ -43,21 +43,23 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
 
 my $fix_it = $dbh->prepare(q{ UPDATE qso_table_v007 SET qsl_received = ? WHERE pk = ? });
 
-my $sth = $dbh->prepare(q{ SELECT * FROM qso_table_v007 WHERE LENGTH(qsl_received) > 24 });
+my $sth = $dbh->prepare(q{ SELECT * FROM qso_table_v007 WHERE LENGTH(qsl_received) > 1 });
 $sth->execute;
 
 my $fixed = 0;
 while(my $row = $sth->fetchrow_hashref) {
-  # eQSL.cc:Y, LoTW:20150917, LoTW:20150919
+  # eQSL.cc DownloadInBox:Y, eQSL.cc:Y, LoTW:20150917, LoTW:20150919
   my @records = split /,/, $row->{qsl_received};
 
   my %confirmations;
   for my $record (@records) {
     my ($where, $data) = map { trim($_) } split /:/, $record;
+    $where = "eQSL.cc" if $where eq "eQSL.cc DownloadInBox";
     next if $where eq 'Y';
     $confirmations{$where} ||= $data; # just keep the first one we see
   }
   my $fixed_shit = join ', ', sort map { "$_:$confirmations{$_}" } keys %confirmations;
+  next if $fixed_shit eq $row->{qsl_received};
 
   say "$row->{call} $row->{qsl_received} -> $fixed_shit";
   $fix_it->execute( $fixed_shit, $row->{pk} );
