@@ -134,7 +134,7 @@ sub log_to_eqsl {
   }
   else {
     my $response = $tx->success->dom->at('body')->text;
-    $response = join, "\n", grep { !m/^$/ }, split "\n", $response;
+    $response = join "\n", grep { !m/^\s*$/ } split "\n", $response;
     say " eQSL: $response";
     return 1;
   }

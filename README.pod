@@ -12,10 +12,8 @@ options.  All of the scripts look for this file as C<config.yml> in the current 
 =head2 send-qsls.pl
 
 This script uploads QSL entries with empty QSL Sent columns to
-L<eQSL|http://eqsl.com> and L<QRZ.com|http://www.qrz.com>.
-Entries can easily be sent to L<LoTW|https://lotw.arrl.org/> from the
-QRZ site after they are imported there. After running, reload your DB by
-selecting File -> Recent -> Your Current Log in MacLoggerDX.
+L<LoTW|https://lotw.arrl.org/>, L<eQSL|http://eqsl.com> and
+L<QRZ.com|http://www.qrz.com>.
 
 =head2 fix-confirmations.pl
 
@@ -23,5 +21,3 @@ If you use DQSL manager to import eQSL & LoTW confirmations into MacLoggerDX you
 can somtetimes end up with duplicates in the QSL Received column of the log such as
 C<eQSL.cc:Y, LoTW:20150917, LoTW:20150919>.  This script keeps just the first
 confirmation entry for each type.
-
-
