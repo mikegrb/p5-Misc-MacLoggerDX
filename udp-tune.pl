@@ -10,7 +10,7 @@ use RPC::XML::Client;
 use Data::Printer;
 
 my $OFFSET     = 1500;
-my $MLDX_NAME  = "Michael’s MacBook Pro";
+my $MLDX_NAME  = "impro";
 my $FREQ_CACHE = 2000;
 
 my %MODE_MAP = (
