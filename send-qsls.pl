@@ -104,7 +104,7 @@ sub update_sent {
   });
 
   for my $pk (keys %results) {
-    my $exported_text = join( ',', grep { $results{$pk}{$_} } keys( $results{$pk} ) );
+    my $exported_text = join( ',', grep { $results{$pk}{$_} } keys( %{$results{$pk}} ) );
     $mark_exported->execute( $exported_text, $pk );
   }
 
@@ -133,7 +133,9 @@ sub log_to_eqsl {
     return;
   }
   else {
-    say " eQSL: " . $tx->success->dom->at('body')->text;
+    my $response = $tx->success->dom->at('body')->text;
+    $response = join, "\n", grep { !m/^$/ }, split "\n", $response;
+    say " eQSL: $response";
     return 1;
   }
 }
