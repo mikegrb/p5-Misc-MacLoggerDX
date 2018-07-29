@@ -28,7 +28,7 @@ my $sth = $dbh->prepare(q{
   SELECT COALESCE(NULLIF(SUBSTR(grid, 3,2), '00' ), 100) AS 'fh_points', *
   FROM qso_table_v007
   WHERE qso_start >= 1272672000 AND mode like '%ELL'
-  ORDER BY qso_done ASC
+  ORDER BY call ASC
 });
 $sth->execute;
 
