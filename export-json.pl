@@ -38,13 +38,14 @@ my %overrides = (
   'Azores'           => 'PT',
   'Balearic Islands' => 'ES',
   'Cape Verde'       => 'CV',
+  'St Martin'        => 'SX',
   'San Andres and Providencia'  => 'CO',
   'St Kitts and Nevis'          => 'KN',
   'Turks and  Caicos Islands'   => 'TC',
   'Federal Republic of Germany' => 'DE',
 );
 
-my $DESCRIPTION = q{<h3>[% call %]</h3><div style="line-height: 1.2em">Worked: [% qso_date %]<br>[% mode %] on [% tx_frequency %] MHz<br>LoTW: [% lotw %] eQSL: [% eqsl %]<br>DXCC: [% dxcc_country %]<br>Name: [% first_name %]</div>};
+my $DESCRIPTION = q{<h3>[% call %]</h3><div style="line-height: 1.2em">Worked: [% qso_date %]<br>[% mode %] on [% tx_frequency %] MHz<br>LoTW: [% lotw %] eQSL: [% eqsl %]<br>DXCC: [% dxcc_country %]<br>Name: [% first_name %]<br><a href="https://www.qrz.com/db/[% call %]">QRZ Page</a></div>};
 
 my $config = YAML::Tiny->read('config.yml')->[0];
 my $dbh    = DBI->connect("dbi:SQLite:dbname=$config->{DB}");
@@ -86,7 +87,7 @@ while ( my $row = $sth->fetchrow_hashref ) {
 
   # geojson
   if ($GRID_MAX) {
-    next if $grid_count{ substr $row->{grid}, 0, 2 }++ > $GRID_MAX;
+    next if $grid_count{ substr $row->{grid}, 0, 4 }++ > $GRID_MAX;
   }
 
   $row->{lotw} = $lotw ? 'Y' : 'N';
