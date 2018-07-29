@@ -21,3 +21,8 @@ If you use DQSL manager to import eQSL & LoTW confirmations into MacLoggerDX you
 can somtetimes end up with duplicates in the QSL Received column of the log such as
 C<eQSL.cc:Y, LoTW:20150917, LoTW:20150919>.  This script keeps just the first
 confirmation entry for each type.
+
+=head2 udp-tune.pl
+
+ Listens to MacLoggerDX UDP broadcast for DX cluster spots and tunes Fldigi to
+ desired frequency and sets modem.

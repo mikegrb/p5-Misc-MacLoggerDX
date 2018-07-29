@@ -7,10 +7,11 @@ use autodie;
 use Cache::LRU;
 use IO::Socket::INET;
 use RPC::XML::Client;
-use Data::Printer;
+use Data::Dumper;
 
+my $config     = YAML::Tiny->read('config.yml')->[0];
 my $OFFSET     = 1500;
-my $MLDX_NAME  = "impro";
+my $MLDX_NAME  = $config->{MLDX_name};
 my $FREQ_CACHE = 2000;
 
 my %MODE_MAP = (
@@ -50,8 +51,7 @@ while ( $sock->recv( $buffer = '', 9000 ) ) {
     }
 
     else {
-      say "Received $type packet:";
-      p %data;
+      print "Received $type packet:\n" . Dumper( \%data );
     }
   }
   else {
